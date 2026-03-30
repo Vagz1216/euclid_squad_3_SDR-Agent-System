@@ -7,7 +7,8 @@ from agentmail import AgentMail
 from agentmail.core.api_error import ApiError
 from pydantic import BaseModel
 
-from shared.config import settings
+from config import settings
+from agents import function_tool
 
 
 class SendEmailResult(BaseModel):
@@ -18,6 +19,7 @@ class SendEmailResult(BaseModel):
     error: str | None = None
 
 
+@function_tool
 def send_agent_email(email: str, name: str, subject: str, body: str) -> SendEmailResult:
     """Send plain text email via AgentMail.
     
@@ -81,7 +83,7 @@ def _send_with_retry(email: str, name: str, subject: str, body: str) -> SendEmai
                 settings.agent_mail_inbox,
                 to=to,
                 subject=subject.strip(),
-                html=body.strip(),
+                text=body.strip(),
             )
             return SendEmailResult(
                 ok=True,

@@ -1,9 +1,6 @@
 """Application settings from environment variables."""
 
-from __future__ import annotations
-
 from pathlib import Path
-
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -11,7 +8,7 @@ class AppConfig(BaseSettings):
     """Application configuration from environment variables."""
     
     model_config = SettingsConfigDict(
-        env_file=Path(__file__).resolve().parents[2] / ".env",
+        env_file=Path(__file__).resolve().parent.parent / ".env", 
         env_file_encoding="utf-8",
         case_sensitive=False,
         frozen=True,
@@ -50,16 +47,3 @@ class AppConfig(BaseSettings):
 
 # Global singleton instance
 settings = AppConfig()
-
-
-# Legacy function for backward compatibility
-def get_settings() -> AppConfig:
-    """Get settings instance. For backward compatibility."""
-    return settings
-
-
-def reload_settings() -> AppConfig:
-    """Reload settings from environment. Creates new instance."""
-    global settings
-    settings = AppConfig()
-    return settings
