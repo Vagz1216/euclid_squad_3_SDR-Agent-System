@@ -7,7 +7,7 @@ from typing import Dict, Any
 
 from config import settings
 from schema import WebhookEvent
-from .agent import email_monitor
+from .monitor import email_monitor
 
 logging.basicConfig(
     level=getattr(logging, settings.log_level.upper(), logging.INFO),
