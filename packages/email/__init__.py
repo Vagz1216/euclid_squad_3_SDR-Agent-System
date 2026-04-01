@@ -1,3 +1,5 @@
-"""Email package - server and utilities"""
+"""Email package — outbound send helpers."""
 
-# TODO: Implement email sending and receiving
+from packages.email.outreach_send import send_outreach_email
+
+__all__ = ["send_outreach_email"]

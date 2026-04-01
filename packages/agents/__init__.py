@@ -1,3 +1,5 @@
-"""Agents package - AI workflows"""
+"""Agents package — outreach and (later) monitoring workflows."""
 
-# TODO: Implement agent workflows for outreach and monitoring
+from packages.agents.outreach_pipeline import CampaignContext, run_outreach_batch
+
+__all__ = ["CampaignContext", "run_outreach_batch"]
