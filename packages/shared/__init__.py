@@ -1,1 +1,1 @@
-"""Shared settings and helpers for ``packages`` (outreach)."""
+"""Shared settings and helpers for the packages namespace."""

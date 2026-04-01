@@ -42,7 +42,7 @@ async def _run(limit: int, *, dry_run: bool, full_body: bool) -> int:
 
 def main() -> None:
     p = argparse.ArgumentParser(
-        description="Run outbound outreach batch (spec §4). Use --dry-run to review drafts without sending.",
+        description="Run one outbound batch. Use --dry-run to review drafts without sending.",
     )
     p.add_argument("--limit", type=int, default=5, help="Max leads to process this run")
     p.add_argument(

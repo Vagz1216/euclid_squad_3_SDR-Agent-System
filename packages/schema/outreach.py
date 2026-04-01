@@ -1,4 +1,4 @@
-"""Pydantic contracts for outreach email generation (spec §4)."""
+"""Pydantic models for outbound email drafts and run results."""
 
 from pydantic import BaseModel, Field
 
@@ -28,7 +28,11 @@ class OutreachRunRecord(BaseModel):
     subject: str | None = None
     message_id: str | None = None
     thread_id: str | None = None
-    #: True when email was generated + validated but not sent (review / staging).
-    dry_run: bool = False
-    #: Truncated body for review; omit in production logs if policy requires.
-    body_preview: str | None = None
+    dry_run: bool = Field(
+        default=False,
+        description="True when copy was validated but not sent (dry run).",
+    )
+    body_preview: str | None = Field(
+        default=None,
+        description="Short body snippet for review output.",
+    )

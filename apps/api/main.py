@@ -1,7 +1,7 @@
 """
-API app — minimal trigger for outreach (spec §12 Run Campaign).
+Minimal FastAPI app to trigger an outreach batch.
 
-Run from repo root: uv run uvicorn apps.api.main:app --reload --app-dir .
+Run from repo root: uv run uvicorn apps.api.main:app --reload
 """
 
 from __future__ import annotations

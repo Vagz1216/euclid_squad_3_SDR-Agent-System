@@ -1,7 +1,7 @@
 """
-Outreach agent execution: fetch leads → generate → guardrails → send → update DB.
+Outreach batch: fetch eligible leads, generate copy, guardrails, send, then update the DB.
 
-Spec §4. Persists lead + ``campaign_leads`` + ``email_messages`` + ``events`` after each successful send.
+After each successful send: lead row, campaign_leads, email_messages, and events audit row.
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class CampaignContext:
-    """Campaign copy for prompts. Usually loaded from ``campaigns`` rows; optional override for tests."""
+    """Campaign copy for prompts. Usually loaded from campaigns rows; optional override for tests."""
 
     name: str = "Default campaign"
     value_proposition: str = "We help teams automate outbound with AI-assisted workflows."
@@ -46,12 +46,12 @@ async def run_outreach_batch(
     body_preview_max_len: int | None = 400,
 ) -> list[OutreachRunRecord]:
     """
-    Process up to `limit` eligible leads.
+    Process up to limit eligible leads.
 
-    - Normal: generate → guardrails → AgentMail send → DB touch update (commit per send).
-    - ``dry_run=True``: generate → guardrails only; no send, no DB updates (for review/staging).
+    Normal mode: generate, guardrails, AgentMail send, then commit per send.
+    dry_run: generate and guardrails only; no send and no DB updates for staging.
 
-    Sets OPENAI_API_KEY in the process env for the OpenAI Agents SDK if missing.
+    Sets OPENAI_API_KEY on the process for the OpenAI Agents SDK if missing.
     """
     settings = get_settings()
     if settings.openai_api_key and not os.environ.get("OPENAI_API_KEY"):

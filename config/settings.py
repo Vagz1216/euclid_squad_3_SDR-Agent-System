@@ -1,6 +1,5 @@
 """Application settings from environment variables."""
 
-from pathlib import Path
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -34,24 +33,28 @@ class AppConfig(BaseSettings):
         gt=0, le=65535
     )
 
-    # Database & Cache
-    database_url: str | None = Field(
-        default=None,
-        description="Database connection URL"
+    # Database (SQLAlchemy; outreach bootstrap uses db/schema.sql for SQLite)
+    database_url: str = Field(
+        default="sqlite:///./db/sdr.sqlite3",
+        validation_alias="DATABASE_URL",
+        description="Database URL (default: SQLite next to db/schema.sql)",
     )
 
-    # API Keys
+    # API Keys (.env: OPENAI_API_KEY, AGENTMAIL_*)
     openai_api_key: str | None = Field(
         default=None,
-        description="OpenAI API key for AI model access"
+        validation_alias="OPENAI_API_KEY",
+        description="OpenAI API key for AI model access",
     )
     agentmail_api_key: str | None = Field(
         default=None,
-        description="AgentMail API key for email operations"
+        validation_alias="AGENTMAIL_API_KEY",
+        description="AgentMail API key for email operations",
     )
     agentmail_inbox_id: str | None = Field(
         default=None,
-        description="AgentMail inbox identifier"
+        validation_alias="AGENTMAIL_INBOX_ID",
+        description="AgentMail inbox identifier",
     )
 
     # Model Parameters - Intent Extraction
@@ -81,11 +84,51 @@ class AppConfig(BaseSettings):
         ge=0.0, le=1.0
     )
     response_max_tokens: int = Field(
-        default=1000, 
+        default=1000,
         description="Maximum tokens for email response generation",
-        gt=0, le=2000
+        gt=0,
+        le=2000,
     )
 
+    # --- Outreach agent (packages/agents/outreach_*) ---
+    outreach_model: str = Field(
+        default="gpt-4o-mini",
+        description="OpenAI model for outbound email generation",
+    )
+    outreach_temperature: float = Field(
+        default=0.5,
+        ge=0.0,
+        le=2.0,
+        description="Temperature for outbound copy",
+    )
+    outreach_max_tokens: int = Field(
+        default=500,
+        gt=0,
+        le=4096,
+        description="Max tokens for outbound email generation",
+    )
+    max_emails_per_lead: int = Field(
+        default=5,
+        ge=1,
+        description="Cap per lead; also gates campaign_leads.emails_sent eligibility",
+    )
+    max_words_per_email: int = Field(
+        default=200,
+        ge=1,
+        description="Guardrail: max words in outbound body",
+    )
+    tone: str = Field(
+        default="professional",
+        description="Tone hint for outbound generation",
+    )
+    forbidden_phrases: str = Field(
+        default="guaranteed ROI,100% guarantee,no risk",
+        description="Comma-separated substrings to block in outbound copy",
+    )
+    opt_out_footer: str = Field(
+        default="\n\nIf you'd prefer not to hear from us, reply with STOP and we will remove you.",
+        description="Appended to outbound body when no opt-out wording detected",
+    )
 
     # Convenient aliases
     @property
@@ -101,7 +144,7 @@ class AppConfig(BaseSettings):
         return self.agentmail_inbox_id
     
     @property
-    def db_url(self) -> str | None:
+    def db_url(self) -> str:
         return self.database_url
 
 

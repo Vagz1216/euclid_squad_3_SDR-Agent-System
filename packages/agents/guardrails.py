@@ -1,11 +1,12 @@
-"""Programmatic guardrails after LLM draft (spec §4)."""
+"""Programmatic guardrails after the model drafts outbound copy."""
 
 from __future__ import annotations
 
 import re
 
+from config.settings import AppConfig
 from packages.schema.outreach import OutreachEmailDraft
-from packages.shared.settings import OutreachSettings, get_settings
+from packages.shared.settings import get_settings
 
 
 def _word_count(text: str) -> int:
@@ -15,11 +16,11 @@ def _word_count(text: str) -> int:
 def validate_outreach_draft(
     draft: OutreachEmailDraft,
     *,
-    settings: OutreachSettings | None = None,
+    settings: AppConfig | None = None,
 ) -> tuple[bool, str | None]:
     """
     Returns (ok, error_message).
-    Enforces length, forbidden phrases, and basic sanity (spec §4 guardrails).
+    Enforces length, forbidden phrases, and basic sanity checks.
     """
     settings = settings or get_settings()
     combined = f"{draft.subject}\n{draft.body}".lower()
@@ -39,8 +40,8 @@ def validate_outreach_draft(
     return True, None
 
 
-def apply_opt_out_footer(draft: OutreachEmailDraft, settings: OutreachSettings | None = None) -> OutreachEmailDraft:
-    """Template injection: ensure opt-out line is present (spec §4)."""
+def apply_opt_out_footer(draft: OutreachEmailDraft, settings: AppConfig | None = None) -> OutreachEmailDraft:
+    """Append or keep an opt-out line in the body when missing."""
     settings = settings or get_settings()
     footer = settings.opt_out_footer.strip()
     if not footer:
@@ -51,5 +52,5 @@ def apply_opt_out_footer(draft: OutreachEmailDraft, settings: OutreachSettings |
     return OutreachEmailDraft(subject=draft.subject, body=f"{body}\n{footer}")
 
 
-def _forbidden_list(settings: OutreachSettings) -> list[str]:
+def _forbidden_list(settings: AppConfig) -> list[str]:
     return [x.strip() for x in settings.forbidden_phrases.split(",") if x.strip()]

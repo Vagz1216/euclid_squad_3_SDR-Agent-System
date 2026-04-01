@@ -8,7 +8,7 @@ from packages.shared.settings import OutreachSettings
 def test_validate_passes_clean_draft():
     draft = OutreachEmailDraft(
         subject="Quick question on your roadmap",
-        body="Hi — we help teams streamline outreach. Open to a short call?",
+        body="Hi - we help teams streamline outreach. Open to a short call?",
     )
     settings = OutreachSettings(
         max_words_per_email=200,

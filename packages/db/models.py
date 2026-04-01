@@ -1,8 +1,7 @@
 """
-ORM models aligned with `db/schema.sql` (same as upstream `api` branch).
+ORM models aligned with db/schema.sql.
 
-SQLite uses this schema via bootstrap; for non-SQLite, `create_all` builds compatible tables
-(without CHECK constraints — prefer migrations later).
+SQLite loads that file via bootstrap. Other engines use create_all until migrations exist.
 """
 
 from __future__ import annotations
@@ -125,7 +124,7 @@ class Meeting(Base):
 
 
 class AuditEvent(Base):
-    """Audit row in `events` table (avoid name clash with SQLAlchemy ``event``)."""
+    """Audit row in the events table (class name avoids clashing with SQLAlchemy event)."""
 
     __tablename__ = "events"
 

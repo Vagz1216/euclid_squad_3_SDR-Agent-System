@@ -1,4 +1,4 @@
-"""Read/update leads and campaign state for outreach (spec §4 + upstream api lead_service)."""
+"""Read and update leads and campaign state for outbound batches."""
 
 from __future__ import annotations
 
@@ -23,12 +23,8 @@ class OutreachTarget:
 
 def fetch_eligible_targets(session: Session, *, limit: int = 20) -> list[OutreachTarget]:
     """
-    Same rules as upstream ``services/lead_service.get_leads``:
-
-    - Not opted out
-    - Campaign status ACTIVE
-    - ``campaign_leads.emails_sent`` < cap (from settings ``max_emails_per_lead``)
-    - Lead status not terminal for outreach
+    Eligible targets: not opted out, active campaign, emails_sent below cap
+    (max_emails_per_lead from settings), lead status allowed for outreach.
     """
     settings = get_settings()
     cap = settings.max_emails_per_lead
@@ -68,12 +64,9 @@ def persist_outbound_success(
     provider_thread_id: str | None,
 ) -> None:
     """
-    After a successful provider send:
-
-    - Bump ``leads.touch_count`` + ``last_contacted_at``
-    - Increment ``campaign_leads.emails_sent`` (insert join row if missing)
-    - Insert ``email_messages`` outbound row (spec §8.4)
-    - Append ``events`` audit row
+    After a successful provider send: update lead timestamps and counts,
+    increment campaign_leads.emails_sent (create join row if needed),
+    insert outbound email_messages, append events audit row.
     """
     now = datetime.now(timezone.utc)
     lead.touch_count = int(lead.touch_count or 0) + 1

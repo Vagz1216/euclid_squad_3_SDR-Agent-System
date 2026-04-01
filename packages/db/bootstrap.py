@@ -1,7 +1,7 @@
 """
-Apply SQLite schema + optional seed (aligned with upstream `api` branch db/).
+Apply SQLite schema and optional seed from db/schema.sql and db/seed.sql.
 
-Postgres/other URLs skip this and rely on SQLAlchemy metadata (see session.py).
+For non-SQLite URLs, session setup uses SQLAlchemy metadata instead.
 """
 
 from __future__ import annotations

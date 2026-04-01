@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Add demo leads linked to campaign 1 (after ``db/schema.sql`` + ``db/seed.sql`` bootstrap).
+Add demo leads linked to campaign 1 after db/schema.sql and db/seed.sql bootstrap.
 
 The first engine connect applies schema and seeds sample campaigns/leads if empty.
 This script adds extra rows for local testing without duplicating emails.
@@ -52,7 +52,7 @@ def main() -> None:
                     meeting_booked=False,
                 )
             )
-            print(f"added {email} → campaign {campaign.id}")
+            print(f"added {email} to campaign {campaign.id}")
         session.commit()
         print("Done. Eligible outreach needs ACTIVE campaign + join row (see db/seed.sql defaults).")
     finally:

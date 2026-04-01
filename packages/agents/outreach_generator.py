@@ -1,4 +1,4 @@
-"""LLM step: produce {subject, body} JSON (spec §4) via OpenAI Agents SDK."""
+"""Use the OpenAI Agents SDK to produce subject and body JSON for outbound mail."""
 
 from __future__ import annotations
 

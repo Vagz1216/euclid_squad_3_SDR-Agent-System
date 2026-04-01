@@ -1,4 +1,4 @@
-"""Database package — schema, session, outreach queries."""
+"""Database package: schema, session, outreach queries."""
 
 from packages.db.models import (
     AuditEvent,
