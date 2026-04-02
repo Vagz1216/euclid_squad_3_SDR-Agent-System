@@ -4,11 +4,11 @@ import logging
 from typing import Dict, Any
 
 from config.logging import setup_logging
-from agents import Agent, ModelSettings, Runner
+from agents import Agent, ModelSettings, Runner, set_default_openai_key
 from tools import (
     send_reply_email, 
     create_google_meeting,
-    get_staff_member_email,
+    get_staff_tool,
     notify_staff_about_meeting,
     generate_meeting_details
 )
@@ -18,6 +18,10 @@ from config import settings
 # Setup logging
 setup_logging()
 logger = logging.getLogger(__name__)
+
+# Set OpenAI API key for agents library
+if settings.openai_api_key:
+    set_default_openai_key(settings.openai_api_key)
 
 logger = logging.getLogger(__name__)
 
@@ -29,30 +33,30 @@ class EmailSenderAgent:
         self.agent = Agent(
             name="EmailSenderAgent",
             instructions="""
-You are a professional email and meeting coordination agent. Based on the approved response and email context, take appropriate actions.
+You are an email and meeting coordination agent. Execute actions based on the approved response.
 
-Your available actions:
-- Send email replies using send_reply_email tool  
-- Generate meeting details using generate_meeting_details tool
-- Get staff member email using get_staff_member_email tool
-- Create Google Calendar meetings using create_google_meeting tool
-- Send meeting notifications to staff using notify_staff_about_meeting tool
+Available tools:
+- send_reply_email: Send email responses  
+- generate_meeting_details: Create meeting information
+- get_staff_tool: Get staff member details
+- create_google_meeting: Create calendar events with attendees
+- notify_staff_about_meeting: Email staff about meetings
 
-IMPORTANT WORKFLOW FOR MEETINGS:
-1. Always send the approved response using send_reply_email tool first
-2. If the response mentions scheduling a meeting, call, or appointment:
-   a) Generate meeting details using generate_meeting_details tool
-   b) Get staff member email using get_staff_member_email tool
-   c) Create meeting with create_google_meeting tool (include client + staff emails)
-   d) Send notification to staff using notify_staff_about_meeting tool
+WORKFLOW:
+1. Always send the approved response to the client using send_reply_email
+2. If response mentions meeting/call/appointment:
+   a) Generate meeting details with generate_meeting_details
+   b) Get staff details (name + email) with get_staff_tool  
+   c) Create meeting with create_google_meeting (2 attendees: staff + client)
+   d) Notify staff with notify_staff_about_meeting (pass MeetingDetails with conversation summary)
 
-Execute tools in the correct sequence for meeting scenarios.
+Execute tools in sequence for meeting scenarios.
 """,
             tools=[
                 send_reply_email, 
                 generate_meeting_details,
                 create_google_meeting,
-                get_staff_member_email,
+                get_staff_tool,
                 notify_staff_about_meeting
             ],
             model_settings=ModelSettings(
@@ -74,28 +78,17 @@ Execute tools in the correct sequence for meeting scenarios.
         email_content = email_data.get('text', '') or email_data.get('preview', '')
         
         context = f"""
-The following response has been approved and should be sent:
+APPROVED RESPONSE: {approved_response}
 
-APPROVED RESPONSE:
-{approved_response}
-
-EMAIL CONTEXT:
-- From: {sender_email}
+EMAIL DETAILS:
+- To: {sender_email}
 - Subject: {subject}  
-- Thread ID: {thread_id}
+- Thread: {thread_id}
+- Intent: {intent_data.get('intent', 'unknown')} ({intent_data.get('confidence', 0.0)})
 - Content: {email_content}
-- Client Intent: {intent_data.get('intent', 'unknown')} (confidence: {intent_data.get('confidence', 0.0)})
-- Conversation History: {conversation_history or "No previous conversation."}
+- History: {conversation_history or 'None'}
 
-INSTRUCTIONS:
-1. Always send the approved response using send_reply_email tool
-2. If the response mentions scheduling a meeting/call/appointment:
-   a) Use generate_meeting_details tool with the email context
-   b) Get staff email using get_staff_member_email tool  
-   c) Create meeting with create_google_meeting tool (include client + staff emails)
-   d) Send notification to staff using notify_staff_about_meeting tool
-
-Execute the appropriate combination of tools based on the approved response content.
+Execute appropriate tools based on response content.
 """
         
         try:

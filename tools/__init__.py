@@ -5,7 +5,6 @@ from schema import SendEmailResult
 from .send_email import send_agent_email, send_plain_email
 from .email_reply import send_reply_email
 from .google_calendar import create_google_meeting
-from .get_staff_email import get_staff_member_email
 from .notify_staff import notify_staff_about_meeting
 from .generate_meeting_details import generate_meeting_details
 from .staff_tools import get_staff_tool
@@ -16,7 +15,6 @@ __all__ = [
     "SendEmailResult", 
     "send_reply_email",
     "create_google_meeting",
-    "get_staff_member_email",
     "notify_staff_about_meeting",
     "generate_meeting_details",
     "get_staff_tool"

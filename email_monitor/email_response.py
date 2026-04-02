@@ -1,17 +1,20 @@
 """Email response generation agent."""
 
-import json
 import logging
 from typing import Dict, Any
 
 from config.logging import setup_logging
-from agents import Agent, ModelSettings, Runner
+from agents import Agent, ModelSettings, Runner, set_default_openai_key
 from schema import EmailIntent, EmailResponse
 from config import settings
 
 # Setup logging
 setup_logging()
 logger = logging.getLogger(__name__)
+
+# Set OpenAI API key for agents library
+if settings.openai_api_key:
+    set_default_openai_key(settings.openai_api_key)
 
 
 class EmailResponseAgent:
@@ -33,14 +36,13 @@ Analyze the email intent and generate an appropriate response:
 
 For valid intents (confidence >= 0.3), generate professional responses (2-3 paragraphs max).
 For low confidence or unwanted intents, set action to "skipped" with reason.
-
-Respond with JSON only: {"response_text": "...", "action": "generated|skipped|error", "reason": null}
 """,
             model_settings=ModelSettings(
                 model=settings.response_model,
                 temperature=settings.response_temperature,
                 max_tokens=settings.response_max_tokens
-            )
+            ),
+            output_type=EmailResponse
         )
     
     async def generate_response(self, email_data: Dict[str, Any], intent: EmailIntent, conversation_history: str = "") -> EmailResponse:
@@ -53,7 +55,7 @@ Respond with JSON only: {"response_text": "...", "action": "generated|skipped|er
         
         try:
             result = await Runner.run(self.agent, context)
-            return EmailResponse(**json.loads(result.final_output))
+            return result.final_output
         except Exception as e:
             logger.error(f"Failed to generate response: {e}")
             return EmailResponse(

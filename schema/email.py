@@ -43,6 +43,7 @@ class MeetingDetails(BaseModel):
     start_time: str = Field(description="Meeting start time in YYYY-MM-DD HH:MM format")
     duration_minutes: int = Field(description="Duration of the meeting in minutes")
     description: str = Field(description="Brief meeting description with context from email conversation")
+    conversation_summary: str = Field(description="Concise summary of the email thread context for staff notification")
 
 
 class EmailResponse(BaseModel):

@@ -4,7 +4,7 @@ import logging
 from datetime import datetime, timedelta
 
 from config.logging import setup_logging
-from agents import Agent, ModelSettings, Runner, function_tool
+from agents import Agent, ModelSettings, Runner, function_tool, set_default_openai_key
 from config import settings
 from schema import MeetingDetails
 
@@ -12,9 +12,13 @@ from schema import MeetingDetails
 setup_logging()
 logger = logging.getLogger(__name__)
 
+# Set OpenAI API key for agents library
+if settings.openai_api_key:
+    set_default_openai_key(settings.openai_api_key)
+
 
 @function_tool
-def generate_meeting_details(email_context: str, sender_email: str) -> MeetingDetails:
+async def generate_meeting_details(email_context: str, sender_email: str) -> MeetingDetails:
     """Generate structured meeting details from email context.
     
     Args:
@@ -39,22 +43,22 @@ Generate professional meeting details:
 - Start Time: Next 1-3 business days, 9AM-5PM UTC, YYYY-MM-DD HH:MM format
 - Duration: 15 min (quick questions), 30 min (general), 60 min (demos/detailed)  
 - Description: Brief context from email conversation
-
-Respond with JSON only: {{"subject": "...", "start_time": "YYYY-MM-DD HH:MM", "duration_minutes": 30, "description": "..."}}
+- Conversation Summary: Concise 2-3 sentence summary of email thread for staff context
 """,
         model_settings=ModelSettings(
             model=settings.response_model,
             temperature=0.3,
             max_tokens=300
-        )
+        ),
+        output_type=MeetingDetails
     )
     
     # Extract company name from email
     company_name = sender_email.split('@')[1].split('.')[0].title() if '@' in sender_email else "Client"
     
     try:
-        result = Runner.run(agent, email_context)
-        meeting_details = MeetingDetails(**json.loads(result.final_output))
+        result = await Runner.run(agent, email_context)
+        meeting_details = result.final_output
         logger.info(f"Generated meeting details for {sender_email}: {meeting_details.subject}")
         return meeting_details
     except Exception as e:
@@ -67,5 +71,6 @@ Respond with JSON only: {{"subject": "...", "start_time": "YYYY-MM-DD HH:MM", "d
             subject=f"Business Discussion - {company_name}",
             start_time=next_business_day.replace(hour=14, minute=0).strftime('%Y-%m-%d %H:%M'),
             duration_minutes=30,
-            description=f"Meeting to discuss business needs and explore potential collaboration opportunities with {company_name}."
+            description=f"Meeting to discuss business needs and explore potential collaboration opportunities with {company_name}.",
+            conversation_summary=f"Client {sender_email} expressed interest in our services and requested a meeting to discuss how we can help their company."
         )

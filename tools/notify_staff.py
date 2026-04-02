@@ -1,10 +1,11 @@
 """Tool to notify staff members about scheduled meetings."""
 
 import logging
+import json        
 from config.logging import setup_logging
 from agents import function_tool
 from tools.send_email import send_agent_email
-from schema import SendEmailResult
+from schema import SendEmailResult, MeetingDetails
 
 # Setup logging
 setup_logging()
@@ -15,39 +16,37 @@ logger = logging.getLogger(__name__)
 def notify_staff_about_meeting(
     staff_email: str,
     client_email: str, 
-    meeting_subject: str,
-    meeting_description: str,
-    meeting_time: str,
-    original_email_content: str = ""
+    meeting_details: str  # JSON string of MeetingDetails object
 ) -> SendEmailResult:
     """Send notification email to staff member about scheduled meeting.
     
     Args:
         staff_email: Staff member's email address
         client_email: Client's email address
-        meeting_subject: Subject of the scheduled meeting
-        meeting_description: Description/agenda of the meeting
-        meeting_time: Meeting start time
-        original_email_content: Original client email content for context
+        meeting_details: JSON string containing MeetingDetails with all meeting info and conversation summary
         
     Returns:
         SendEmailResult with success status
     """
     try:
+        details_dict = json.loads(meeting_details)
+        meeting = MeetingDetails(**details_dict)
+        
         # Create staff notification email
-        staff_subject = f"Meeting Scheduled: {meeting_subject}"
+        staff_subject = f"Meeting Scheduled: {meeting.subject}"
         
         staff_body = f"""Hi there,
 
 A meeting has been automatically scheduled with a client. Here are the details:
 
 CLIENT: {client_email}
-MEETING: {meeting_subject}
-TIME: {meeting_time}
-AGENDA: {meeting_description}
+MEETING: {meeting.subject}
+TIME: {meeting.start_time}
+DURATION: {meeting.duration_minutes} minutes
+AGENDA: {meeting.description}
 
-ORIGINAL CLIENT MESSAGE:
-{original_email_content[:500]}{'...' if len(original_email_content) > 500 else ''}
+CONVERSATION CONTEXT:
+{meeting.conversation_summary}
 
 The client has been sent a calendar invitation. Please review your calendar and prepare for the meeting.
 
