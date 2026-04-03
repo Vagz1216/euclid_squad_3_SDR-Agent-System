@@ -23,6 +23,20 @@ class AppConfig(BaseSettings):
         default="info",
         description="Logging level (debug, info, warning, error, critical)"
     )
+    log_file: str = Field(
+        default="logs/squad3.log",
+        description="Path to log file for persistent logging"
+    )
+    log_max_size_mb: int = Field(
+        default=10,
+        description="Maximum log file size in MB before rotation",
+        gt=0, le=100
+    )
+    log_backup_count: int = Field(
+        default=5,
+        description="Number of backup log files to keep",
+        gt=0, le=20
+    )
     app_name: str = Field(
         default="Squad3",
         description="Application name"
@@ -55,6 +69,14 @@ class AppConfig(BaseSettings):
         default=None,
         validation_alias="AGENTMAIL_INBOX_ID",
         description="AgentMail inbox identifier",
+    )
+    composio_api_key: str | None = Field(
+        default=None,
+        description="Composio API key for tool integrations"
+    )
+    composio_user_id: str = Field(
+        default=None,
+        description="Composio user ID for consistent session management"
     )
 
     # Model Parameters - Intent Extraction

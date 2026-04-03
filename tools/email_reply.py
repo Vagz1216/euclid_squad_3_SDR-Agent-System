@@ -4,9 +4,12 @@ from typing import Dict, Any
 import logging
 from agentmail import AgentMail
 
+from config.logging import setup_logging
 from config import settings
 from agents import function_tool
 
+# Setup logging
+setup_logging()
 logger = logging.getLogger(__name__)
 
 
@@ -59,8 +62,10 @@ def send_reply_email(to_email: str, message: str, thread_id: str = None, subject
         if subject:
             send_kwargs['subject'] = subject
         
-        if thread_id:
-            send_kwargs['thread_id'] = thread_id
+        # Note: AgentMail API doesn't accept thread_id in send method
+        # Threading is handled automatically by the service based on subject and recipients
+        # if thread_id:
+        #     send_kwargs['thread_id'] = thread_id
         
         response = client.inboxes.messages.send(settings.agentmail_inbox_id, **send_kwargs)
         

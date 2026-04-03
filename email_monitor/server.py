@@ -5,14 +5,13 @@ import logging
 from fastapi import FastAPI, Request, HTTPException
 from typing import Dict, Any
 
+from config.logging import setup_logging
 from config import settings
 from schema import WebhookEvent
 from .monitor import email_monitor
 
-logging.basicConfig(
-    level=getattr(logging, settings.log_level.upper(), logging.INFO),
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+# Setup logging
+setup_logging()
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Email Monitor", description="AgentMail webhook handler with intent analysis")

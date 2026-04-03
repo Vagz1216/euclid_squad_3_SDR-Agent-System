@@ -3,12 +3,18 @@
 import logging
 from typing import Dict, Any
 
-from agents import Agent, ModelSettings, Runner
-from tools import send_reply_email
-from schema import EmailIntent, EmailActionResult
+from config.logging import setup_logging
+from agents import Agent, ModelSettings, Runner, set_default_openai_key
+from schema import EmailIntent, EmailResponse
 from config import settings
 
+# Setup logging
+setup_logging()
 logger = logging.getLogger(__name__)
+
+# Set OpenAI API key for agents library
+if settings.openai_api_key:
+    set_default_openai_key(settings.openai_api_key)
 
 
 class EmailResponseAgent:
@@ -17,74 +23,48 @@ class EmailResponseAgent:
     def __init__(self):
         self.agent = Agent(
             name="EmailResponseAgent",
+            model=settings.response_model,
             instructions="""
-You are a professional business development assistant responding to client inquiries.
+You are a professional business development assistant crafting strategic email responses.
 
-Your PRIMARY goal is to schedule meetings/calls with potential clients.
+Analyze the email intent and generate an appropriate response:
+- MEETING_REQUEST: Express enthusiasm and suggest specific times
+- QUESTION: Answer concisely and transition to suggesting a call  
+- INTEREST: Build on their interest and push for meetings
+- OPT_OUT: Respect their request gracefully and confirm removal
+- NEUTRAL: Engage professionally and assess potential
+- BOUNCE/SPAM: Set action to "skipped" with appropriate reason
 
-Response guidelines by intent:
-- meeting_request: Confirm availability and provide scheduling options
-- question: Answer briefly, then suggest meeting for detailed discussion
-- interest: Build value and urgency, push for meeting
-- opt_out: Respect request, confirm removal
-- neutral: Engage professionally, steer toward meeting if appropriate
-- bounce/spam: No response needed
+For valid intents (confidence >= 0.3), generate professional responses (2-3 paragraphs max).
+For low confidence or unwanted intents, set action to "skipped" with reason.
 
-Use email conversation history as context for personalized responses.
-Keep responses concise (2-3 paragraphs max).
-Always use send_reply_email function to send your response.
+IMPORTANT: Always end emails with this professional signature:
+Best regards,
+Business Development Team
+Euclid Squad3 Solutions
 """,
-            tools=[send_reply_email],
             model_settings=ModelSettings(
-                model=settings.response_model,
                 temperature=settings.response_temperature,
                 max_tokens=settings.response_max_tokens
-            )
+            ),
+            output_type=EmailResponse
         )
     
-    async def generate_response(self, email_data: Dict[str, Any], intent: EmailIntent, conversation_history: str = "") -> EmailActionResult:
-        """Generate and send appropriate response based on intent."""
+    async def generate_response(self, email_data: Dict[str, Any], intent: EmailIntent, conversation_history: str = "") -> EmailResponse:
+        """Generate appropriate response based on intent."""
         sender_email = email_data.get('from_', [''])[0]
         subject = email_data.get('subject', '')
         content = email_data.get('text', '') or email_data.get('preview', '')
-        thread_id = email_data.get('thread_id')
         
-        # Skip responses for certain intents
-        if intent.intent in ['bounce', 'spam'] or intent.confidence < 0.3:
-            return EmailActionResult(
-                action_taken="skipped",
-                success=True,
-                error=f"Intent: {intent.intent} (confidence: {intent.confidence})"
-            )
-        
-        # Build context for response
-        context = f"""
-Incoming email analysis:
-- From: {sender_email}
-- Subject: {subject}
-- Intent: {intent.intent} (confidence: {intent.confidence})
-- Content: {content}
-
-Conversation history:
-{conversation_history or "No previous conversation."}
-
-Generate appropriate response and send using send_reply_email function.
-"""
+        context = f"From: {sender_email}\nSubject: {subject}\nContent: {content}\nINTENT: {intent.intent} (confidence: {intent.confidence})\nHistory: {conversation_history or 'None'}"
         
         try:
             result = await Runner.run(self.agent, context)
-            
-            return EmailActionResult(
-                action_taken="replied",
-                success=True,
-                message_id=None,  # Would be populated by send_reply_email tool
-                thread_id=thread_id
-            )
-            
+            return result.final_output
         except Exception as e:
             logger.error(f"Failed to generate response: {e}")
-            return EmailActionResult(
-                action_taken="error",
-                success=False,
-                error=str(e)
+            return EmailResponse(
+                response_text="",
+                action="error",
+                reason=str(e)
             )
