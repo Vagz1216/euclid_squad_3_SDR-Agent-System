@@ -141,6 +141,3 @@ def _is_our_message(message_data: Dict[str, Any]) -> bool:
 outreach_interface = create_outreach_interface()
 app = gr.mount_gradio_app(app, outreach_interface, path="/outreach")
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
